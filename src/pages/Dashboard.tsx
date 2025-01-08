@@ -2,14 +2,40 @@ import { SidebarProvider, Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem,
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Schema for category form validation
+const categorySchema = z.object({
+  name: z.string().min(1, "El nombre de la categoría es requerido"),
+});
+
+type CategoryFormValues = z.infer<typeof categorySchema>;
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("futbol");
   const [activeSubTab, setActiveSubTab] = useState("categorias");
+  const [categories, setCategories] = useState<string[]>([]);
+
+  const form = useForm<CategoryFormValues>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: "",
+    },
+  });
+
+  const onSubmit = (data: CategoryFormValues) => {
+    setCategories([...categories, data.name]);
+    form.reset();
+  };
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-[#D3E4FD]">
+      <div className="min-h-screen flex w-full">
         {/* Sidebar */}
         <Sidebar className="border-r">
           <SidebarContent>
@@ -58,8 +84,9 @@ const Dashboard = () => {
         </Sidebar>
 
         {/* Main Content */}
-        <div className="flex-1">
-          <div className="bg-white p-6">
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <div className="bg-[#D3E4FD] p-6">
             {/* Subtabs for Fútbol section */}
             {activeTab === "futbol" && (
               <div className="space-y-4">
@@ -77,28 +104,59 @@ const Dashboard = () => {
                     Personal
                   </Button>
                 </div>
+              </div>
+            )}
+          </div>
 
-                {activeSubTab === "categorias" && (
-                  <div>
-                    <Button className="mb-4">
+          {/* Content Area */}
+          <div className="flex-1 bg-[#D3E4FD] p-6">
+            {activeTab === "futbol" && activeSubTab === "categorias" && (
+              <div>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button className="mb-6">
                       <Plus className="mr-2 h-4 w-4" />
                       Añadir Categoría
                     </Button>
-                  </div>
-                )}
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetHeader>
+                      <SheetTitle>Añadir Nueva Categoría</SheetTitle>
+                    </SheetHeader>
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nombre de la Categoría</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Ingrese el nombre" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <Button type="submit">Crear Categoría</Button>
+                      </form>
+                    </Form>
+                  </SheetContent>
+                </Sheet>
 
-                {activeSubTab === "personal" && (
-                  <div>
-                    <Button className="mb-4">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Añadir Personal
-                    </Button>
-                  </div>
-                )}
+                {/* Categories Grid */}
+                <div className="grid grid-cols-3 gap-4">
+                  {categories.map((category, index) => (
+                    <div
+                      key={index}
+                      className="bg-[#8B5CF6] text-white p-4 rounded-lg shadow-md flex items-center justify-center"
+                    >
+                      {category}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Content for other tabs */}
             {activeTab === "medica" && (
               <h2 className="text-2xl font-bold">Parte Médica</h2>
             )}
@@ -106,8 +164,9 @@ const Dashboard = () => {
               <h2 className="text-2xl font-bold">Parte Física</h2>
             )}
           </div>
-          {/* Yellow bottom bar */}
-          <div className="fixed bottom-0 w-full h-12 bg-[#FEF7CD]"></div>
+
+          {/* Footer */}
+          <div className="h-12 bg-[#FEF7CD]"></div>
         </div>
       </div>
     </SidebarProvider>
