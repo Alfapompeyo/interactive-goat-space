@@ -8,29 +8,60 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 
 // Schema for category form validation
 const categorySchema = z.object({
   name: z.string().min(1, "El nombre de la categoría es requerido"),
 });
 
+// Schema for player form validation
+const playerSchema = z.object({
+  name: z.string().min(1, "El nombre del jugador es requerido"),
+  age: z.string().min(1, "La edad es requerida"),
+  height: z.string().min(1, "La estatura es requerida"),
+  weight: z.string().min(1, "El peso es requerido"),
+  position: z.string().min(1, "La posición es requerida"),
+  photo: z.string().optional(),
+});
+
 type CategoryFormValues = z.infer<typeof categorySchema>;
+type PlayerFormValues = z.infer<typeof playerSchema>;
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("futbol");
   const [activeSubTab, setActiveSubTab] = useState("categorias");
   const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const form = useForm<CategoryFormValues>({
+  const categoryForm = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: "",
     },
   });
 
-  const onSubmit = (data: CategoryFormValues) => {
+  const playerForm = useForm<PlayerFormValues>({
+    resolver: zodResolver(playerSchema),
+    defaultValues: {
+      name: "",
+      age: "",
+      height: "",
+      weight: "",
+      position: "",
+      photo: "",
+    },
+  });
+
+  const onSubmitCategory = (data: CategoryFormValues) => {
     setCategories([...categories, data.name]);
-    form.reset();
+    categoryForm.reset();
+  };
+
+  const onSubmitPlayer = (data: PlayerFormValues) => {
+    console.log("Nuevo jugador:", data);
+    playerForm.reset();
   };
 
   return (
@@ -112,6 +143,7 @@ const Dashboard = () => {
           <div className="flex-1 bg-[#D3E4FD] p-6">
             {activeTab === "futbol" && activeSubTab === "categorias" && (
               <div>
+                {/* Add Category Sheet */}
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button className="mb-6">
@@ -123,10 +155,10 @@ const Dashboard = () => {
                     <SheetHeader>
                       <SheetTitle>Añadir Nueva Categoría</SheetTitle>
                     </SheetHeader>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                    <Form {...categoryForm}>
+                      <form onSubmit={categoryForm.handleSubmit(onSubmitCategory)} className="space-y-4 mt-4">
                         <FormField
-                          control={form.control}
+                          control={categoryForm.control}
                           name="name"
                           render={({ field }) => (
                             <FormItem>
@@ -146,12 +178,102 @@ const Dashboard = () => {
                 {/* Categories Grid */}
                 <div className="grid grid-cols-3 gap-4">
                   {categories.map((category, index) => (
-                    <div
-                      key={index}
-                      className="bg-[#8B5CF6] text-white p-4 rounded-lg shadow-md flex items-center justify-center"
-                    >
-                      {category}
-                    </div>
+                    <Sheet key={index}>
+                      <SheetTrigger asChild>
+                        <div
+                          className="bg-[#8B5CF6] text-white p-4 rounded-lg shadow-md flex items-center justify-center cursor-pointer hover:bg-[#7C3AED]"
+                        >
+                          {category}
+                        </div>
+                      </SheetTrigger>
+                      <SheetContent>
+                        <SheetHeader>
+                          <SheetTitle>Añadir Jugador a {category}</SheetTitle>
+                        </SheetHeader>
+                        <Form {...playerForm}>
+                          <form onSubmit={playerForm.handleSubmit(onSubmitPlayer)} className="space-y-4 mt-4">
+                            <FormField
+                              control={playerForm.control}
+                              name="name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Nombre</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Nombre del jugador" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={playerForm.control}
+                              name="age"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Edad</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" placeholder="Edad" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={playerForm.control}
+                              name="height"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Estatura (cm)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" placeholder="Estatura" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={playerForm.control}
+                              name="weight"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Peso (kg)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" placeholder="Peso" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={playerForm.control}
+                              name="position"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Posición</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Posición del jugador" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={playerForm.control}
+                              name="photo"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Foto</FormLabel>
+                                  <FormControl>
+                                    <Input type="file" accept="image/*" onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        field.onChange(URL.createObjectURL(file));
+                                      }
+                                    }} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button type="submit">Añadir Jugador</Button>
+                          </form>
+                        </Form>
+                      </SheetContent>
+                    </Sheet>
                   ))}
                 </div>
               </div>
